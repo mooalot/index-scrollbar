@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0" />
+    <title>Stencil Component Starter</title>
+
+    <script type="module" src="/build/index-scrollbar.esm.js"></script>
+    <script nomodule src="/build/index-scrollbar.js"></script>
+  </head>
+  <body>
+    <div style="height: 100vh; width: 100vw">
+      <index-scrollbar
+        style="position: absolute; top: 0; right: 0"
+        overflow-divider="-"
+        valid-letters="letterGroups"
+        disable-invalid-letters="true"
+        prioritize-hiding-invalid-letters="true"
+        letter-magnification="true"
+        magnify-dividers="true"
+        magnification-multiplier="3"
+        magnification-curve="[1, .7, .6, .4, .2, 0]"
+        exact-x="true"
+        navigate-on-hover="true"
+        letter-spacing="1%"
+        offset-size-check-interval="100"
+      ></index-scrollbar>
+    </div>
+
+    <script>
+      const todoListElement = document.querySelector('index-scrollbar');
+      todoListElement.addEventListener('letterChange', event => {
+        console.log('letter', event.detail);
+      });
+      todoListElement.addEventListener('isActive', event => {
+        console.log('active', event.detail);
+      });
+      // todoListElement.alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+    </script>
+  </body>
+</html>
