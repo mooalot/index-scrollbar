@@ -18,7 +18,6 @@
 | `magnificationMultiplier`        | `magnification-multiplier`          |             | `number`           | `2`                                 |
 | `magnifyDividers`                | `magnify-dividers`                  |             | `boolean`          | `false`                             |
 | `navigateOnHover`                | `navigate-on-hover`                 |             | `boolean`          | `false`                             |
-| `offsetSizeCheckInterval`        | `offset-size-check-interval`        |             | `number`           | `0`                                 |
 | `overflowDivider`                | `overflow-divider`                  |             | `string`           | `'·'`                               |
 | `prioritizeHidingInvalidLetters` | `prioritize-hiding-invalid-letters` |             | `boolean`          | `false`                             |
 | `validLetters`                   | --                                  |             | `string[]`         | `this.alphabet`                     |
