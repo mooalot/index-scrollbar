@@ -1,6 +1,6 @@
 {
   "name": "index-scrollbar",
-  "version": "0.0.12",
+  "version": "1.0.40",
   "description": "Stencil Component Starter",
   "main": "dist/index.cjs.js",
   "module": "dist/index.js",
@@ -14,12 +14,18 @@
     "dist/",
     "loader/"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mooalot/index-scrollbar"
+  },
   "scripts": {
     "build": "stencil build --prod",
     "start": "stencil build --dev --watch --serve --no-open",
     "test": "stencil test --spec --e2e",
     "test.watch": "stencil test --spec --e2e --watchAll",
-    "generate": "stencil generate"
+    "generate": "stencil generate",
+    "publish:public": "npm run build && npm publish --access=public",
+    "publish:beta": "npm run build && npm publish --tag beta"
   },
   "dependencies": {
     "@stencil/core": "^2.13.0",

@@ -53,10 +53,9 @@ export class IndexScrollbar {
   @Prop() magnifyDividers: boolean = false;
 
   //The maximum that the magnification multiplier can be. Default is 3
-  @Prop() magnificationMultiplier: number = 3;
+  @Prop() magnificationMultiplier: number = 2;
   @Watch('magnificationMultiplier')
   onMagnificationMultiplierChange() {
-    console.log('onMagnificationMultiplierChange', this.magnificationMultiplier);
     this.checkVisibleLetters(true);
   }
 
@@ -70,12 +69,16 @@ export class IndexScrollbar {
 
   //If the scrolling for touch screens in the x direction should be lenient. Default is false
   @Prop() exactX: boolean = false;
+  @Watch('exactX')
+  onExactXChange() {
+    this._isInBounds = true;
+  }
 
   //Whether or not letter change event is emitted on mouse hover. Default is false
   @Prop() navigateOnHover: boolean = false;
 
   //Percentage or number in pixels of how far apart the letters are. Defaults to 1.75%
-  @Prop() letterSpacing: number | string | null = '1%';
+  @Prop() letterSpacing: number | string | null = 0;
   @Watch('letterSpacing')
   onLetterSpacingChange(value) {
     if (!(typeof value === 'number' || typeof value === 'string' || value === null)) throw new Error('letterSpacing must be a number, string or null');
@@ -108,41 +111,61 @@ export class IndexScrollbar {
   })
   isActive: EventEmitter<boolean>;
 
-  private _lastEmittedActive = false;
   @State() _isComponentActive = false;
 
   scrolling: EventEmitter<boolean>;
 
   @State() visibleLetters: Array<string> = [];
+  @State() rendering: boolean = true;
 
   constructor() {}
 
   connectedCallback() {
     window.addEventListener('resize', this.checkVisibleLetters.bind(this));
-    console.log('connectedCallback', this.alphabet);
-    this.visibleLetters = this.alphabet;
   }
 
   componentDidLoad() {
     this.alphabetContainer.addEventListener('touchstart', ev => this.focusEvent(ev, 'touchstart'), { passive: true });
     this.alphabetContainer.addEventListener('touchmove', ev => this.focusEvent(ev, 'touchmove'), { passive: true });
-    this.alphabetContainer.addEventListener('touchend', () => this.focusEnd(), { passive: true });
+    this.alphabetContainer.addEventListener('touchend', ev => this.focusEnd(ev, 'touchend'), { passive: true });
     this.alphabetContainer.addEventListener('mouseenter', ev => this.focusEvent(ev, 'mouseenter'), { passive: true });
     this.alphabetContainer.addEventListener('mousemove', ev => this.focusEvent(ev, 'mousemove'), { passive: true });
-    this.alphabetContainer.addEventListener('mouseleave', () => this.focusEnd(), { passive: true });
-    this.alphabetContainer.addEventListener('click', ev => this.focusEvent(ev, 'click'), { passive: true });
-    this.alphabetContainer.addEventListener('mouseenter', () => this.focusEnd(), { passive: true });
-    this.checkVisibleLetters(true);
+    this.alphabetContainer.addEventListener('mouseleave', ev => this.focusEnd(ev, 'mouseleave'), { passive: true });
+    this.alphabetContainer.addEventListener('mousedown', ev => this.focusEvent(ev, 'mousedown'), { passive: true });
+    this.alphabetContainer.addEventListener('mouseup', ev => this.focusEnd(ev, 'mouseup'), { passive: true });
+    // this.alphabetContainer.addEventListener('click', ev => this.focusEvent(ev, 'click'), { passive: true });
+
+    setTimeout(() => {
+      let interval = setInterval(() => {
+        if (this.alphabetContainer) {
+          this.onAlphabetChange(this.alphabet);
+          this.onOverflowDividerChange(this.overflowDivider);
+          this.onValidLettersChange();
+          this.onDisableInvalidLettersChange();
+          this.onPrioritizeHidingInvalidLettersChange();
+          this.onMagnificationMultiplierChange();
+          this.onMagnificationCurveChange(this.magnificationCurve);
+          this.onLetterSpacingChange(this.letterSpacing);
+          this.onOffsetSizeCheckIntervalChange(this.offsetSizeCheckInterval);
+          this.onExactXChange();
+          this.checkVisibleLetters();
+          this.rendering = false;
+          clearInterval(interval);
+        }
+      }, 100);
+    }, 100);
   }
 
   disconnectedCallback() {
     this.alphabetContainer.removeEventListener('touchstart', ev => this.focusEvent(ev, 'touchstart'));
     this.alphabetContainer.removeEventListener('touchmove', ev => this.focusEvent(ev, 'touchmove'));
-    this.alphabetContainer.removeEventListener('touchend', () => this.focusEnd());
+    this.alphabetContainer.removeEventListener('touchend', ev => this.focusEnd(ev, 'touchend'));
     this.alphabetContainer.removeEventListener('mouseenter', ev => this.focusEvent(ev, 'mouseenter'));
     this.alphabetContainer.removeEventListener('mousemove', ev => this.focusEvent(ev, 'mousemove'));
-    this.alphabetContainer.removeEventListener('mouseleave', () => this.focusEnd());
-    this.alphabetContainer.removeEventListener('click', ev => this.focusEvent(ev, 'click'));
+    this.alphabetContainer.removeEventListener('mouseleave', ev => this.focusEnd(ev, 'mouseleave'));
+    this.alphabetContainer.removeEventListener('mousedown', ev => this.focusEvent(ev, 'mousedown'));
+    this.alphabetContainer.removeEventListener('mouseup', ev => this.focusEnd(ev, 'mouseup'));
+    // this.alphabetContainer.removeEventListener('click', ev => this.focusEvent(ev, 'click'));
     window.removeEventListener('resize', this.checkVisibleLetters.bind(this));
 
     clearInterval(this._offsetSizeCheckIntervalTimer);
@@ -165,7 +188,7 @@ export class IndexScrollbar {
     let letterSize = this.stringToNumber(getComputedStyle(this.alphabetContainer).getPropertyValue('font-size'));
 
     if (this.letterMagnification) {
-      letterSize = letterSize * this.magnificationMultiplier;
+      letterSize = letterSize * this.magnificationMultiplier * 0.6;
     }
 
     //Calculate actual letter spacing
@@ -189,7 +212,7 @@ export class IndexScrollbar {
     this._lettersShortened = height / letterSize < newAlphabet.length;
     if (this._lettersShortened) {
       const numHiddenLetters = newAlphabet.length - Math.floor(height / letterSize);
-      if (numHiddenLetters === newAlphabet.length) newAlphabet = [];
+      // if (numHiddenLetters === newAlphabet.length) newAlphabet = [];
 
       //determine how many letters to hide
       const hiddenHalves = this.getNumHiddenHalves(numHiddenLetters, newAlphabet.length) + 1;
@@ -241,35 +264,38 @@ export class IndexScrollbar {
     return this.validLetters?.includes(letter) !== false || letter === this.overflowDivider;
   }
 
-  focusEvent(event: MouseEvent | TouchEvent | any, type?: string): void {
-    if (!this._lastEmittedActive) {
-      this.isActive.emit((this._lastEmittedActive = true));
-    }
+  private isMobile = false;
 
-    if (type == 'click') this._isComponentActive = false;
-    else this._isComponentActive = true;
+  focusEvent(event: MouseEvent | TouchEvent | any, type?: string): void {
+    if (type === 'touchstart') this.isMobile = true;
+
+    if (type.includes('start') || (type.includes('enter') && !this.isMobile) || (type.includes('down') && !this.isMobile)) {
+      if (!this._isComponentActive) this.isActive.emit((this._isComponentActive = true));
+    }
 
     this.setLetterFromCoordinates(event.touches?.[0].clientX ?? event.clientX, event.touches?.[0].clientY ?? event.clientY);
 
-    if (this._lastEmittedLetter !== this.letterSelected && (this.navigateOnHover || !type.includes('mouse'))) {
+    if (this._lastEmittedLetter !== this.letterSelected && (this.navigateOnHover || !(type.includes('mousemove') || type.includes('enter')))) {
       this.letterChange.emit((this._lastEmittedLetter = this.letterSelected));
     }
   }
   @State() _lastEmittedLetter: string;
 
-  focusEnd(): void {
-    this.isActive.emit((this._isComponentActive = this._lastEmittedActive = false));
+  focusEnd(_: MouseEvent | TouchEvent | any, type?: string): void {
+    if (type.includes('up')) return;
+    this.isActive.emit((this._isComponentActive = false));
   }
 
   @State() magIndex: number;
+  @State() _isInBounds: boolean = true;
 
   private setLetterFromCoordinates(x: number, y: number): void {
     if (this.exactX) {
       const rightX = this.alphabetContainer.getBoundingClientRect().right;
       const leftX = this.alphabetContainer.getBoundingClientRect().left;
 
-      this._isComponentActive = x > leftX && x < rightX;
-      if (!this._isComponentActive) {
+      this._isInBounds = x > leftX && x < rightX;
+      if (!this._isInBounds) {
         this.visualLetterIndex = this.visualLetterIndex = null;
         return;
       }
@@ -344,7 +370,7 @@ export class IndexScrollbar {
       transform: `scale(${magnification})`,
       zIndex: this.magIndex === index ? 1 : 0,
     };
-    return this._isComponentActive && this.letterMagnification ? style : { transform: 'scale(1)', zIndex: 0 };
+    return this._isInBounds && this._isComponentActive && this.letterMagnification ? style : { transform: 'scale(1)', zIndex: 0 };
   }
 
   render() {
@@ -353,6 +379,7 @@ export class IndexScrollbar {
         <div
           class={{
             container: true,
+            visible: !this.rendering,
           }}
         >
           {this.visibleLetters?.map((letter, i) => {
