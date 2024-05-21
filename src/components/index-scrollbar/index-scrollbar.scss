@@ -1,50 +1,55 @@
 :host {
-  //not less than 12px and not more than 20px
-  font-size: min(20px, max(12px, 1vh));
+  .padding {
+    //not less than 12px and not more than 20px
+    //one day make this variable
+    --font-size: min(20px, max(12px, 1vh));
+    font-size: var(--font-size);
 
-  //Twice the font-size
-  padding: calc(2 * min(20px, max(12px, 1vh))) 0;
+    //Twice the font-size
+    padding: calc(2 * var(--font-size)) 0;
+    height: calc(100% - 2 * calc(2 * var(--font-size)));
 
-  .container {
-    &.visible {
-      opacity: 1 !important;
-    }
-    transition: opacity 0.2s ease-in-out;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
+    .container {
+      &.visible {
+        opacity: 1 !important;
+      }
+      transition: opacity 0.2s ease-in-out;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
 
-    &.cursor-pointer {
-      cursor: pointer;
-    }
-
-    .letter {
-      //Increase the area for mouse hover
-      padding: 0 20px;
-      position: relative;
-
-      pointer-events: none;
-
-      transition: transform 0.2s ease-in-out;
-      transform-origin: 60%;
-
-      //Absolute positioning for letters being able to overlap
-      label {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+      &.cursor-pointer {
+        cursor: pointer;
       }
 
-      &.letter-disabled {
-        opacity: 0.3;
-      }
+      .letter {
+        //Increase the area for mouse hover
+        padding: 0 20px;
+        position: relative;
 
-      &.letter-is-hidden-value {
-        transform-origin: center;
-        transform: scale(2);
+        pointer-events: none;
+
+        transition: transform 0.2s ease-in-out;
+        transform-origin: 60%;
+
+        //Absolute positioning for letters being able to overlap
+        label {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+        }
+
+        &.letter-disabled {
+          opacity: 0.3;
+        }
+
+        &.letter-is-hidden-value {
+          transform-origin: center;
+          transform: scale(2);
+        }
       }
     }
   }

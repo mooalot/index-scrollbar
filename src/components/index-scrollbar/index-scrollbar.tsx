@@ -85,16 +85,6 @@ export class IndexScrollbar {
     this.checkVisibleLetters(true);
   }
 
-  //This interval can be used for fast, regular size-checks
-  //Useful, if e.g. a splitter-component resizes the scroll-bar but not the window itself. Set in ms and defaults to 0 (disabled)
-  @Prop() offsetSizeCheckInterval: number = 0;
-  @Watch('offsetSizeCheckInterval')
-  onOffsetSizeCheckIntervalChange(value: number) {
-    if (this._offsetSizeCheckIntervalTimer) clearInterval(this._offsetSizeCheckIntervalTimer);
-    this.offsetSizeCheckInterval = value;
-    this.offsetSizeCheckInterval && ((this._offsetSizeCheckIntervalTimer = setInterval(() => this.checkVisibleLetters())), this.offsetSizeCheckInterval);
-  }
-
   private _offsetSizeCheckIntervalTimer: any;
 
   @Event({
@@ -118,55 +108,49 @@ export class IndexScrollbar {
   @State() visibleLetters: Array<string> = [];
   @State() rendering: boolean = true;
 
-  constructor() {}
-
-  connectedCallback() {
-    window.addEventListener('resize', this.checkVisibleLetters.bind(this));
-  }
+  private focusEventHandler: (ev: Event) => void;
+  private focusEndHandler: (ev: Event) => void;
+  private resizeObserver: ResizeObserver;
 
   componentDidLoad() {
-    this.alphabetContainer.addEventListener('touchstart', ev => this.focusEvent(ev, 'touchstart'), { passive: true });
-    this.alphabetContainer.addEventListener('touchmove', ev => this.focusEvent(ev, 'touchmove'), { passive: true });
-    this.alphabetContainer.addEventListener('touchend', ev => this.focusEnd(ev, 'touchend'), { passive: true });
-    this.alphabetContainer.addEventListener('mouseenter', ev => this.focusEvent(ev, 'mouseenter'), { passive: true });
-    this.alphabetContainer.addEventListener('mousemove', ev => this.focusEvent(ev, 'mousemove'), { passive: true });
-    this.alphabetContainer.addEventListener('mouseleave', ev => this.focusEnd(ev, 'mouseleave'), { passive: true });
-    this.alphabetContainer.addEventListener('mousedown', ev => this.focusEvent(ev, 'mousedown'), { passive: true });
-    this.alphabetContainer.addEventListener('mouseup', ev => this.focusEnd(ev, 'mouseup'), { passive: true });
-    // this.alphabetContainer.addEventListener('click', ev => this.focusEvent(ev, 'click'), { passive: true });
-
-    setTimeout(() => {
-      let interval = setInterval(() => {
-        if (this.alphabetContainer) {
-          this.onAlphabetChange(this.alphabet);
-          this.onOverflowDividerChange(this.overflowDivider);
-          this.onValidLettersChange();
-          this.onDisableInvalidLettersChange();
-          this.onPrioritizeHidingInvalidLettersChange();
-          this.onMagnificationMultiplierChange();
-          this.onMagnificationCurveChange(this.magnificationCurve);
-          this.onLetterSpacingChange(this.letterSpacing);
-          this.onOffsetSizeCheckIntervalChange(this.offsetSizeCheckInterval);
-          this.onExactXChange();
-          this.checkVisibleLetters();
-          this.rendering = false;
-          clearInterval(interval);
+    this.resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        if (entry.target === this.alphabetContainer) {
+          this.checkVisibleLetters(true);
         }
-      }, 100);
-    }, 100);
+      }
+    });
+
+    // Start observing the div
+    this.resizeObserver.observe(this.alphabetContainer);
+
+    const focusEventHandler = ev => this.focusEvent(ev, ev.type);
+    const focusEndHandler = ev => this.focusEnd(ev, ev.type);
+
+    this.focusEventHandler = focusEventHandler;
+    this.focusEndHandler = focusEndHandler;
+
+    this.alphabetContainer.addEventListener('touchstart', focusEventHandler);
+    this.alphabetContainer.addEventListener('touchmove', focusEventHandler);
+    this.alphabetContainer.addEventListener('touchend', focusEndHandler);
+    this.alphabetContainer.addEventListener('mouseenter', focusEventHandler);
+    this.alphabetContainer.addEventListener('mousemove', focusEventHandler);
+    this.alphabetContainer.addEventListener('mouseleave', focusEndHandler);
+    this.alphabetContainer.addEventListener('mousedown', focusEventHandler);
+    this.alphabetContainer.addEventListener('mouseup', focusEndHandler);
   }
 
   disconnectedCallback() {
-    this.alphabetContainer.removeEventListener('touchstart', ev => this.focusEvent(ev, 'touchstart'));
-    this.alphabetContainer.removeEventListener('touchmove', ev => this.focusEvent(ev, 'touchmove'));
-    this.alphabetContainer.removeEventListener('touchend', ev => this.focusEnd(ev, 'touchend'));
-    this.alphabetContainer.removeEventListener('mouseenter', ev => this.focusEvent(ev, 'mouseenter'));
-    this.alphabetContainer.removeEventListener('mousemove', ev => this.focusEvent(ev, 'mousemove'));
-    this.alphabetContainer.removeEventListener('mouseleave', ev => this.focusEnd(ev, 'mouseleave'));
-    this.alphabetContainer.removeEventListener('mousedown', ev => this.focusEvent(ev, 'mousedown'));
-    this.alphabetContainer.removeEventListener('mouseup', ev => this.focusEnd(ev, 'mouseup'));
-    // this.alphabetContainer.removeEventListener('click', ev => this.focusEvent(ev, 'click'));
-    window.removeEventListener('resize', this.checkVisibleLetters.bind(this));
+    this.alphabetContainer.removeEventListener('touchstart', this.focusEventHandler);
+    this.alphabetContainer.removeEventListener('touchmove', this.focusEventHandler);
+    this.alphabetContainer.removeEventListener('touchend', this.focusEndHandler);
+    this.alphabetContainer.removeEventListener('mouseenter', this.focusEventHandler);
+    this.alphabetContainer.removeEventListener('mousemove', this.focusEventHandler);
+    this.alphabetContainer.removeEventListener('mouseleave', this.focusEndHandler);
+    this.alphabetContainer.removeEventListener('mousedown', this.focusEventHandler);
+    this.alphabetContainer.removeEventListener('mouseup', this.focusEndHandler);
+
+    this.resizeObserver.disconnect();
 
     clearInterval(this._offsetSizeCheckIntervalTimer);
   }
@@ -267,6 +251,7 @@ export class IndexScrollbar {
   private isMobile = false;
 
   focusEvent(event: MouseEvent | TouchEvent | any, type?: string): void {
+    event.preventDefault();
     if (type === 'touchstart') this.isMobile = true;
 
     if (type.includes('start') || (type.includes('enter') && !this.isMobile) || (type.includes('down') && !this.isMobile)) {
@@ -376,27 +361,29 @@ export class IndexScrollbar {
   render() {
     return (
       <Host>
-        <div
-          class={{
-            container: true,
-            visible: !this.rendering,
-          }}
-        >
-          {this.visibleLetters?.map((letter, i) => {
-            return (
-              <div
-                key={`${letter}-${i}`}
-                class={{
-                  'letter': true,
-                  'letter-disabled': this.disableInvalidLetters && !this.isValid(letter),
-                }}
-                style={this.getLetterStyle(i)}
-                id={this.visibleLetters[i]}
-              >
-                <label> {letter}</label>
-              </div>
-            );
-          })}
+        <div class={{ padding: true }}>
+          <div
+            class={{
+              container: true,
+              visible: !this.rendering,
+            }}
+          >
+            {this.visibleLetters?.map((letter, i) => {
+              return (
+                <div
+                  key={`${letter}-${i}`}
+                  class={{
+                    'letter': true,
+                    'letter-disabled': this.disableInvalidLetters && !this.isValid(letter),
+                  }}
+                  style={this.getLetterStyle(i)}
+                  id={this.visibleLetters[i]}
+                >
+                  <label> {letter}</label>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </Host>
     );

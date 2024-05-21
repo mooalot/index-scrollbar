@@ -8,7 +8,7 @@
     <script type="module" src="/build/index-scrollbar.esm.js"></script>
     <script nomodule src="/build/index-scrollbar.js"></script>
   </head>
-  <body>
+  <body style="margin: 0; padding: 0; font-family: sans-serif">
     <div style="height: 100vh; width: 100vw">
       <index-scrollbar
         style="position: absolute; top: 0; right: 0; height: 100vh"
@@ -34,10 +34,7 @@
         console.log('active', event.detail);
       });
       // todoListElement.alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
-      todoListElement.magnificationCurve = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0];
-      setTimeout(() => {
-        todoListElement.validLetters = 'abcdexyz'.split('');
-      }, 1000);
+      todoListElement.magnificationCurve = [1, 0.5, 0.25, 0.1, 0.05, 0.01];
     </script>
   </body>
 </html>

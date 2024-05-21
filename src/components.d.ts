@@ -16,14 +16,29 @@ export namespace Components {
         "magnificationMultiplier": number;
         "magnifyDividers": boolean;
         "navigateOnHover": boolean;
-        "offsetSizeCheckInterval": number;
         "overflowDivider": string | undefined | null;
         "prioritizeHidingInvalidLetters": boolean;
         "validLetters": string[];
     }
 }
+export interface IndexScrollbarCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLIndexScrollbarElement;
+}
 declare global {
+    interface HTMLIndexScrollbarElementEventMap {
+        "letterChange": string;
+        "isActive": boolean;
+    }
     interface HTMLIndexScrollbarElement extends Components.IndexScrollbar, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLIndexScrollbarElementEventMap>(type: K, listener: (this: HTMLIndexScrollbarElement, ev: IndexScrollbarCustomEvent<HTMLIndexScrollbarElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLIndexScrollbarElementEventMap>(type: K, listener: (this: HTMLIndexScrollbarElement, ev: IndexScrollbarCustomEvent<HTMLIndexScrollbarElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
     }
     var HTMLIndexScrollbarElement: {
         prototype: HTMLIndexScrollbarElement;
@@ -44,9 +59,8 @@ declare namespace LocalJSX {
         "magnificationMultiplier"?: number;
         "magnifyDividers"?: boolean;
         "navigateOnHover"?: boolean;
-        "offsetSizeCheckInterval"?: number;
-        "onIsActive"?: (event: CustomEvent<boolean>) => void;
-        "onLetterChange"?: (event: CustomEvent<string>) => void;
+        "onIsActive"?: (event: IndexScrollbarCustomEvent<boolean>) => void;
+        "onLetterChange"?: (event: IndexScrollbarCustomEvent<string>) => void;
         "overflowDivider"?: string | undefined | null;
         "prioritizeHidingInvalidLetters"?: boolean;
         "validLetters"?: string[];
